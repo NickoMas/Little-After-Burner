@@ -1,3 +1,4 @@
+//general fixed values through the whole game
 export const playerFireThreshold = 600;
 
 export const rocketInFront = 5;

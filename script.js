@@ -83,7 +83,7 @@ const setKey = function (event, status) {
 	}
 
 	pressedKey[key] = status;
-}
+};
 
 
 

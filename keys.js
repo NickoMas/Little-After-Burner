@@ -1,3 +1,4 @@
+//predefined active keys for the game
 const keys = {
     key1: {
         keyCode: 32,

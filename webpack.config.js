@@ -4,16 +4,19 @@ module.exports = {
         filename: "bundle.js"
     },
     module: {
-        rules:[
+        rules: [
             {
                 test:/\.js$/,
                 exclude: /node_modules/,
-                loader:"jshint-loader"
+                loader:"babel-loader",
+                query: {
+                    presets: 'es2015'
+                }
             },
             {
                 test:/\.js$/,
                 exclude: /node_modules/,
-                loader: "babel-loader"
+                loader: "jshint-loader"
             }
         ]
     }

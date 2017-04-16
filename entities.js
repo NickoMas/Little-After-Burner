@@ -4,6 +4,12 @@ const resources = (function () {
 
 	let cache = {};
 
+    /**
+     * caches and loads image resources
+     * @function
+     * @param {string} source
+     * @return {object}
+     */
 	const load = (source) => {
 		if(cache[source]) {
 			return cache[source];
@@ -16,7 +22,8 @@ const resources = (function () {
 	};
 
 	return {
-		load : load };
+		load : load
+    };
 })();
 
 

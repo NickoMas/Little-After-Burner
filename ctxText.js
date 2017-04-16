@@ -1,3 +1,4 @@
+//parameters for styling text on canvas
 const ctxText = {
     font: "30px Comic Sans MS",
     textAlign: "center",
