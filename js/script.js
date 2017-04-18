@@ -1,7 +1,8 @@
 import {Sound} from "./sounds.js";
-import {keys, keyEvents} from "./keys.js";
-import {resources, Entity} from "./entities.js";
-import {ctxText} from "./ctxText.js";
+import { Entity } from "./entities.js";
+import { CONST_KEYS, CONST_KEY_EVENTS } from "./keys.js";
+import { CONST_CTX_TEXT } from "./ctxText.js";
+import { CONST_STATE } from "./gameState.js";
 import {
 	CONST_PLAYER_FIRE_THRESHOLD,
 	CONST_ROCKET_INFRONT,
@@ -27,15 +28,13 @@ const bgcanvas = document.querySelector('#field');
 let ctx = canvas.getContext('2d');
 let bgctx = bgcanvas.getContext('2d');
 
-export {ctx, canvas};
-
 let startButton = document.getElementById("start");
 let layer = document.getElementById("layer");
 
 
 // game state variables
 let lastTime;
-let lastFire=0;
+let lastFire = 0;
 let player;
 let lastEnemyCreated = 0;
 let lastEnemyFired = 0;
@@ -52,6 +51,34 @@ let toBeAnimated;
 let boom = new Sound("sounds/boom.mp3");
 let fire = new Sound("sounds/launch.mp3");
 
+const resources = (function () {
+
+	let cache = {};
+
+    /**
+     * caches and loads image resources
+     * @function
+     * @param {string} source
+     * @return {object}
+     */
+	const load = (source) => {
+		if(cache[source]) {
+			return cache[source];
+		} else {
+			let entity = new Image();
+			entity.src = source;
+			cache[source] = entity;
+			return entity;
+		}
+	};
+
+	return {
+		load : load
+    };
+})();
+
+export { ctx, canvas, resources };
+
 /**
  * writes into memory the key being pressed
  * @function
@@ -62,20 +89,20 @@ const setKey = function (event, status) {
 	let key;
 
 	switch(event.keyCode) {
-		case keys.key1.keyCode :
-			key = keys.key1.keyName;
+		case CONST_KEYS.key1.keyCode :
+			key = CONST_KEYS.key1.keyName;
 			break;
-		case keys.key2.keyCode :
-			key = keys.key2.keyName;
+		case CONST_KEYS.key2.keyCode :
+			key = CONST_KEYS.key2.keyName;
 			break;
-		case keys.key3.keyCode :
-			key = keys.key3.keyName;
+		case CONST_KEYS.key3.keyCode :
+			key = CONST_KEYS.key3.keyName;
 			break;
-		case keys.key4.keyCode :
-			key = keys.key4.keyName;
+		case CONST_KEYS.key4.keyCode :
+			key = CONST_KEYS.key4.keyName;
 			break;
-		case keys.key5.keyCode :
-			key = keys.key5.keyName;
+		case CONST_KEYS.key5.keyCode :
+			key = CONST_KEYS.key5.keyName;
 			break;
 		default:
 			key = String.fromCharCode(event.keyCode);
@@ -86,19 +113,19 @@ const setKey = function (event, status) {
 
 
 
-document.addEventListener(keyEvents.key1, (event) => {
+document.addEventListener(CONST_KEY_EVENTS.key1, (event) => {
 	setKey(event, true);
 });
 
-document.addEventListener(keyEvents.key2, (event) => {
+document.addEventListener(CONST_KEY_EVENTS.key2, (event) => {
 	setKey(event, false);
 
-	if (event.keyCode === keys.key1.keyCode) {
+	if (event.keyCode === CONST_KEYS.key1.keyCode) {
 		pressedKey.cooldown = false;
 	}
 });
 
-startButton.addEventListener(keyEvents.key3, (event) => {
+startButton.addEventListener(CONST_KEY_EVENTS.key3, (event) => {
 	layer.style.display = "none";
 	resetGame();
 });
@@ -116,24 +143,24 @@ const handleInput = function (delta) {
 		return;
 	}
 
-	if(pressedKey[keys.key2.keyName]) {
+	if(pressedKey[CONST_KEYS.key2.keyName]) {
 		player.position[0] -= player.sprite.speed * delta;
 	}
 
-	if(pressedKey[keys.key4.keyName]) {
+	if(pressedKey[CONST_KEYS.key4.keyName]) {
 		player.position[0] += player.sprite.speed * delta;
 	}
 
-	if(pressedKey[keys.key3.keyName]) {
+	if(pressedKey[CONST_KEYS.key3.keyName]) {
 		player.position[1] -= player.sprite.speed * delta;
 	}
 
-	if(pressedKey[keys.key5.keyName]) {
+	if(pressedKey[CONST_KEYS.key5.keyName]) {
 		player.position[1] += player.sprite.speed * delta;
 	}
 
 	// holding space will not help when firing a rocket
-	if(pressedKey[keys.key1.keyName] &&
+	if(pressedKey[CONST_KEYS.key1.keyName] &&
 		playerFireInt > CONST_PLAYER_FIRE_THRESHOLD &&
 		!pressedKey.cooldown) {
 
@@ -150,7 +177,7 @@ const handleInput = function (delta) {
 
 		//initiates keyup event so that to prevent holding space and firing
 		let keyUp = document.createEvent('HTMLEvents');
-		keyUp.initEvent(keyEvents.key2, true, false);
+		keyUp.initEvent(CONST_KEY_EVENTS.key2, true, false);
 		document.dispatchEvent(keyUp);
 
 		pressedKey.cooldown = true;
@@ -252,13 +279,13 @@ const updateEntities = function (delta) {
 	let enemyFireInt = Date.now() - lastEnemyFired;
 
 	if(toBeAnimated.player) {
-		toBeAnimated.player.forEach((element)=>{
+		toBeAnimated.player.forEach((element) => {
 			element.sprite.updateSelf(delta);
 		});
 	}
 
 	if(toBeAnimated.explosion) {
-		toBeAnimated.explosion.forEach((element)=>{
+		toBeAnimated.explosion.forEach((element) => {
 			element.sprite.updateSelf(delta);
 		});
 	}
@@ -303,7 +330,7 @@ const updateEntities = function (delta) {
 		}
 
 		//resolves collisions between enemies and rockets
-		toBeAnimated.rocket.forEach((innerEl)=>{
+		toBeAnimated.rocket.forEach((innerEl) => {
 
 			if(innerEl.position[1] + innerEl.sprite.size[1] < 0) {
 				innerEl.toErase = true;
@@ -423,10 +450,10 @@ const updateEntities = function (delta) {
  */
 const gameOver = function () {
 
-	ctx.font = ctxText.font;
-	ctx.textAlign = ctxText.textAlign;
-	ctx.fillStyle = ctxText.fillStyle;
-	ctx.fillText(ctxText.fillText, canvas.width / 2, canvas.height / 2);
+	ctx.font = CONST_CTX_TEXT.font;
+	ctx.textAlign = CONST_CTX_TEXT.textAlign;
+	ctx.fillStyle = CONST_CTX_TEXT.fillStyle;
+	ctx.fillText( CONST_CTX_TEXT.fillText, canvas.width / 2, canvas.height / 2);
 
 	setTimeout(() => {
 		layer.style.display = "block";

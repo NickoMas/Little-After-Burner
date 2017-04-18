@@ -1,31 +1,4 @@
-import {ctx, canvas} from "./script.js";
-
-const resources = (function () {
-
-	let cache = {};
-
-    /**
-     * caches and loads image resources
-     * @function
-     * @param {string} source
-     * @return {object}
-     */
-	const load = (source) => {
-		if(cache[source]) {
-			return cache[source];
-		} else {
-			let entity = new Image();
-			entity.src = source;
-			cache[source] = entity;
-			return entity;
-		}
-	};
-
-	return {
-		load : load
-    };
-})();
-
+import { ctx, canvas, resources } from "./script.js";
 
 /**
  * constructs all entities in game
@@ -100,4 +73,4 @@ class Entity {
 
 }
 
-export {resources, Entity};
+export { Entity };

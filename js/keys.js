@@ -1,5 +1,5 @@
 //predefined active keys for the game
-const keys = {
+const CONST_KEYS = {
     key1: {
         keyCode: 32,
         keyName: 'SPACE',
@@ -22,10 +22,10 @@ const keys = {
     }
 };
 
-const keyEvents = {
+const CONST_KEY_EVENTS = {
     key1: 'keydown',
     key2: 'keyup',
     key3: 'click'
 };
 
-export {keys, keyEvents};
+export { CONST_KEYS, CONST_KEY_EVENTS };

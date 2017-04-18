@@ -12,7 +12,7 @@ canvas {
   	border-bottom-right-radius: 5px;
 }
 
-#layer {
+.layer {
 	position: absolute;
 	width: 632px;
 	height: 584px;
@@ -30,7 +30,7 @@ button {
 	left: 45%;
 }
 
-#logo {
+.logo {
 	position: absolute;
 	top:25%;
 	left:7%;

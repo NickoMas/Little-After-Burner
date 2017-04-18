@@ -1,0 +1,23 @@
+{
+  "name": "game",
+  "version": "1.0.0",
+  "description": "HTML5 game featuring canvas and some Web APIs",
+  "main": "bundle.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NickoMas/Little-After-Burner"
+  },
+  "author": "NickoMas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NickoMas/Little-After-Burner/issues"
+  },
+  "homepage": "https://github.com/NickoMas/Little-After-Burner#readme",
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^6.4.1"
+  }
+}
