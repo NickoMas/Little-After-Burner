@@ -8,15 +8,16 @@ module.exports = {
             {
                 test:/\.js$/,
                 exclude: /node_modules/,
-                loader:"babel-loader",
-                query: {
-                    presets: 'es2015'
+                loader: "babel-loader",
+                options: {
+                    presets: ["es2015"]
                 }
             },
             {
-                test:/\.js$/,
+                enforce: "pre",
+                test: /\.js$/,
                 exclude: /node_modules/,
-                loader: "jshint-loader"
+                loader: "eslint-loader"
             }
         ]
     }

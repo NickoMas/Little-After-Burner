@@ -1,0 +1,33 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true
+    },
+    "extends": "airbnb",
+    "parserOptions": {
+        "sourceType": "module"
+    },
+    "rules": {
+        "indent": "off",
+        "no-tabs": "off",
+        "spaced-comment": "off",
+        "comma-dangle": "off",
+        "func-names": "off",
+        "no-param-reassign": "warn",
+        "padded-blocks": "off",
+        "import/extensions": "off",
+        "import/prefer-default-export": "warn",
+        "linebreak-style": [
+            "error",
+            "windows"
+        ],
+        "quotes": [
+            "error",
+            "double"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ]
+    }
+}

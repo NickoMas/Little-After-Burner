@@ -6,9 +6,9 @@
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -76,47 +76,92 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.resources = exports.canvas = exports.ctx = undefined;
+/**
+ * stores game state data
+ * @return {object}
+ */
+var CONST_STATE = function () {
+	var canvas = document.querySelector("#action");
+	var bgcanvas = document.querySelector("#field");
+	var ctx = canvas.getContext("2d");
+	var bgctx = bgcanvas.getContext("2d");
 
-var _sounds = __webpack_require__(5);
+	var startButton = document.getElementById("start");
+	var layer = document.getElementById("layer");
 
-var _keys = __webpack_require__(4);
+	var lastTime = null;
+	var lastFire = 0;
+	var lastEnemyCreated = 0;
+	var lastEnemyFired = 0;
+	var player = null;
+	var field = null;
 
-var _entities = __webpack_require__(2);
+	var gameTime = null;
+	var isGameOver = null;
 
-var _ctxText = __webpack_require__(1);
+	var mainOST = null;
+	var boom = null;
+	var fire = null;
 
-var _fixedValues = __webpack_require__(3);
+	var pressedKey = { cooldown: false };
 
-//two canvas are drawn: one for background
-// another for game action
-var canvas = document.querySelector('#action');
-var bgcanvas = document.querySelector('#field');
+	var toBeAnimated = null;
 
-var ctx = canvas.getContext('2d');
-var bgctx = bgcanvas.getContext('2d');
+	var mainEntities = null;
 
-var startButton = document.getElementById("start");
-var layer = document.getElementById("layer");
+	return {
+		canvas: canvas,
+		bgcanvas: bgcanvas,
+		ctx: ctx,
+		bgctx: bgctx,
+		startButton: startButton,
+		layer: layer,
+		lastTime: lastTime,
+		lastFire: lastFire,
+		lastEnemyCreated: lastEnemyCreated,
+		lastEnemyFired: lastEnemyFired,
+		player: player,
+		field: field,
+		gameTime: gameTime,
+		isGameOver: isGameOver,
+		mainOST: mainOST,
+		boom: boom,
+		fire: fire,
+		pressedKey: pressedKey,
+		toBeAnimated: toBeAnimated,
+		mainEntities: mainEntities
+	};
+}();
 
-// game state variables
-var lastTime = void 0;
-var lastFire = 0;
-var player = void 0;
-var lastEnemyCreated = 0;
-var lastEnemyFired = 0;
-var gameTime = void 0;
-var isGameOver = void 0;
-var mainOST = void 0;
+exports.CONST_STATE = CONST_STATE;
 
-//pressed keys memoized in object, cooldown is for rocket fire limit
-var pressedKey = { cooldown: false };
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
 
-//buffer for all animations
-var toBeAnimated = void 0;
+"use strict";
 
-var boom = new _sounds.Sound("sounds/boom.mp3");
-var fire = new _sounds.Sound("sounds/launch.mp3");
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.resetGame = exports.setKey = exports.resources = undefined;
+
+var _sounds = __webpack_require__(7);
+
+var _entities = __webpack_require__(4);
+
+var _keys = __webpack_require__(2);
+
+var _ctxText = __webpack_require__(3);
+
+var _gameState = __webpack_require__(0);
+
+var _events = __webpack_require__(5);
+
+var _fixedValues = __webpack_require__(6);
+
+(0, _events.initEvents)();
 
 var resources = function () {
 
@@ -139,14 +184,19 @@ var resources = function () {
 		}
 	};
 
-	return {
-		load: load
-	};
+	return { load: load };
 }();
 
-exports.ctx = ctx;
-exports.canvas = canvas;
 exports.resources = resources;
+
+
+_gameState.CONST_STATE.field = new _entities.Entity("images/terrain.png", [0, 0]);
+
+_gameState.CONST_STATE.boom = new _sounds.Sound("sounds/boom.mp3");
+_gameState.CONST_STATE.fire = new _sounds.Sound("sounds/launch.mp3");
+
+//requiring all resources
+_gameState.CONST_STATE.mainEntities = [resources.load("images/player.png"), resources.load("images/terrain.png"), resources.load("images/foe.png"), resources.load("images/Lizard.jpg"), resources.load("images/logo.png")];
 
 /**
  * writes into memory the key being pressed
@@ -154,7 +204,6 @@ exports.resources = resources;
  * @param {object} event
  * @param {boolean} status
  */
-
 var setKey = function setKey(event, status) {
 	var key = void 0;
 
@@ -178,25 +227,8 @@ var setKey = function setKey(event, status) {
 			key = String.fromCharCode(event.keyCode);
 	}
 
-	pressedKey[key] = status;
+	_gameState.CONST_STATE.pressedKey[key] = status;
 };
-
-document.addEventListener(_keys.CONST_KEY_EVENTS.key1, function (event) {
-	setKey(event, true);
-});
-
-document.addEventListener(_keys.CONST_KEY_EVENTS.key2, function (event) {
-	setKey(event, false);
-
-	if (event.keyCode === _keys.CONST_KEYS.key1.keyCode) {
-		pressedKey.cooldown = false;
-	}
-});
-
-startButton.addEventListener(_keys.CONST_KEY_EVENTS.key3, function (event) {
-	layer.style.display = "none";
-	resetGame();
-});
 
 /**
  * assigns parameters to entities
@@ -205,45 +237,45 @@ startButton.addEventListener(_keys.CONST_KEY_EVENTS.key3, function (event) {
  */
 var handleInput = function handleInput(delta) {
 
-	var playerFireInt = Date.now() - lastFire;
+	var playerFireInt = Date.now() - _gameState.CONST_STATE.lastFire;
 
-	if (isGameOver) {
+	if (_gameState.CONST_STATE.isGameOver) {
 		return;
 	}
 
-	if (pressedKey[_keys.CONST_KEYS.key2.keyName]) {
-		player.position[0] -= player.sprite.speed * delta;
+	if (_gameState.CONST_STATE.pressedKey[_keys.CONST_KEYS.key2.keyName]) {
+		_gameState.CONST_STATE.player.position[0] -= _gameState.CONST_STATE.player.sprite.speed * delta;
 	}
 
-	if (pressedKey[_keys.CONST_KEYS.key4.keyName]) {
-		player.position[0] += player.sprite.speed * delta;
+	if (_gameState.CONST_STATE.pressedKey[_keys.CONST_KEYS.key4.keyName]) {
+		_gameState.CONST_STATE.player.position[0] += _gameState.CONST_STATE.player.sprite.speed * delta;
 	}
 
-	if (pressedKey[_keys.CONST_KEYS.key3.keyName]) {
-		player.position[1] -= player.sprite.speed * delta;
+	if (_gameState.CONST_STATE.pressedKey[_keys.CONST_KEYS.key3.keyName]) {
+		_gameState.CONST_STATE.player.position[1] -= _gameState.CONST_STATE.player.sprite.speed * delta;
 	}
 
-	if (pressedKey[_keys.CONST_KEYS.key5.keyName]) {
-		player.position[1] += player.sprite.speed * delta;
+	if (_gameState.CONST_STATE.pressedKey[_keys.CONST_KEYS.key5.keyName]) {
+		_gameState.CONST_STATE.player.position[1] += _gameState.CONST_STATE.player.sprite.speed * delta;
 	}
 
 	// holding space will not help when firing a rocket
-	if (pressedKey[_keys.CONST_KEYS.key1.keyName] && playerFireInt > _fixedValues.CONST_PLAYER_FIRE_THRESHOLD && !pressedKey.cooldown) {
+	if (_gameState.CONST_STATE.pressedKey[_keys.CONST_KEYS.key1.keyName] && playerFireInt > _fixedValues.CONST_PLAYER_FIRE_THRESHOLD && !_gameState.CONST_STATE.pressedKey.cooldown) {
 
-		fire.play();
+		_gameState.CONST_STATE.fire.play();
 
-		toBeAnimated.rocket.push({ position: [player.position[0], player.position[1] - _fixedValues.CONST_ROCKET_INFRONT],
-			sprite: new _entities.Entity('images/player.png', [0, 0], [50, 60], false, 100, 160)
+		_gameState.CONST_STATE.toBeAnimated.rocket.push({ position: [_gameState.CONST_STATE.player.position[0], _gameState.CONST_STATE.player.position[1] - _fixedValues.CONST_ROCKET_INFRONT],
+			sprite: new _entities.Entity("images/player.png", [0, 0], [50, 60], false, 100, 160)
 		});
 
 		//initiates keyup event so that to prevent holding space and firing
-		var keyUp = document.createEvent('HTMLEvents');
+		var keyUp = document.createEvent("HTMLEvents");
 		keyUp.initEvent(_keys.CONST_KEY_EVENTS.key2, true, false);
 		document.dispatchEvent(keyUp);
 
-		pressedKey.cooldown = true;
+		_gameState.CONST_STATE.pressedKey.cooldown = true;
 
-		lastFire = Date.now();
+		_gameState.CONST_STATE.lastFire = Date.now();
 	}
 };
 
@@ -253,25 +285,23 @@ var handleInput = function handleInput(delta) {
  * @param {object} entity
  */
 var renderEntities = function renderEntities(entity) {
-	ctx.save();
-	ctx.translate(entity.position[0], entity.position[1]);
-	entity.sprite.renderSelf(ctx);
-	ctx.restore();
+	_gameState.CONST_STATE.ctx.save();
+	_gameState.CONST_STATE.ctx.translate(entity.position[0], entity.position[1]);
+	entity.sprite.renderSelf(_gameState.CONST_STATE.ctx);
+	_gameState.CONST_STATE.ctx.restore();
 };
-
-var field = new _entities.Entity('images/terrain.png', [0, 0]);
 
 /**
  * makes background moving infinitely and renders it
  * @function
  */
 var fieldRender = function fieldRender() {
-	var translateY = _fixedValues.CONST_FIELD_VELOCITY * ((Date.now() - lastTime) / 1000);
-	var pattern = ctx.createPattern(field.sprite, 'repeat');
-	bgctx.fillStyle = pattern;
-	bgctx.rect(translateY, 0, 780, 720);
-	bgctx.fill();
-	bgctx.translate(0, translateY);
+	var translateY = _fixedValues.CONST_FIELD_VELOCITY * ((Date.now() - _gameState.CONST_STATE.lastTime) / 1000);
+	var pattern = _gameState.CONST_STATE.ctx.createPattern(_gameState.CONST_STATE.field.sprite, "repeat");
+	_gameState.CONST_STATE.bgctx.fillStyle = pattern;
+	_gameState.CONST_STATE.bgctx.rect(translateY, 0, 780, 720);
+	_gameState.CONST_STATE.bgctx.fill();
+	_gameState.CONST_STATE.bgctx.translate(0, translateY);
 };
 
 /**
@@ -282,31 +312,49 @@ var render = function render() {
 
 	fieldRender();
 
-	if (!isGameOver && player) {
-		renderEntities(player);
+	if (!_gameState.CONST_STATE.isGameOver && _gameState.CONST_STATE.player) {
+		renderEntities(_gameState.CONST_STATE.player);
 	}
 
-	toBeAnimated.rocket.forEach(function (element) {
+	_gameState.CONST_STATE.toBeAnimated.rocket.forEach(function (element) {
 		element.position[1] += _fixedValues.CONST_ROCKET_VELOCITY;
 		renderEntities(element);
 	});
 
-	toBeAnimated.bullets.forEach(function (element) {
+	_gameState.CONST_STATE.toBeAnimated.bullets.forEach(function (element) {
 		element.position[1] += _fixedValues.CONST_BULLETS_VELOCITY;
 		renderEntities(element);
 	});
 
-	toBeAnimated.enemy.forEach(function (element) {
+	_gameState.CONST_STATE.toBeAnimated.enemy.forEach(function (element) {
 		element.position[1] += _fixedValues.CONST_ENEMY_VELOCITY;
 		renderEntities(element);
 	});
 
-	toBeAnimated.explosion.forEach(function (element) {
+	_gameState.CONST_STATE.toBeAnimated.explosion.forEach(function (element) {
 		renderEntities(element);
 		if (element.sprite.done) {
 			element.toErase = true;
 		}
 	});
+};
+
+/**
+ * describes actions on game being over
+ * @function
+ */
+var gameOver = function gameOver() {
+
+	_gameState.CONST_STATE.ctx.font = _ctxText.CONST_CTX_TEXT.font;
+	_gameState.CONST_STATE.ctx.textAlign = _ctxText.CONST_CTX_TEXT.textAlign;
+	_gameState.CONST_STATE.ctx.fillStyle = _ctxText.CONST_CTX_TEXT.fillStyle;
+	_gameState.CONST_STATE.ctx.fillText(_ctxText.CONST_CTX_TEXT.fillText, _gameState.CONST_STATE.canvas.width / 2, _gameState.CONST_STATE.canvas.height / 2);
+
+	setTimeout(function () {
+		_gameState.CONST_STATE.layer.style.display = "block";
+	}, 1000);
+
+	_gameState.CONST_STATE.isGameOver = true;
 };
 
 /**
@@ -330,52 +378,52 @@ var collide = function collide(position, size, position2, size2) {
  */
 var updateEntities = function updateEntities(delta) {
 
-	var enemySpawnInt = Date.now() - lastEnemyCreated;
+	var enemySpawnInt = Date.now() - _gameState.CONST_STATE.lastEnemyCreated;
 
-	var enemyFireInt = Date.now() - lastEnemyFired;
+	var enemyFireInt = Date.now() - _gameState.CONST_STATE.lastEnemyFired;
 
-	if (toBeAnimated.player) {
-		toBeAnimated.player.forEach(function (element) {
+	if (_gameState.CONST_STATE.toBeAnimated.player) {
+		_gameState.CONST_STATE.toBeAnimated.player.forEach(function (element) {
 			element.sprite.updateSelf(delta);
 		});
 	}
 
-	if (toBeAnimated.explosion) {
-		toBeAnimated.explosion.forEach(function (element) {
+	if (_gameState.CONST_STATE.toBeAnimated.explosion) {
+		_gameState.CONST_STATE.toBeAnimated.explosion.forEach(function (element) {
 			element.sprite.updateSelf(delta);
 		});
 	}
 
 	//creates enemies within time interval
-	if (gameTime > _fixedValues.CONST_GAME_TIMEINT && enemySpawnInt > _fixedValues.CONST_ENEMY_SPAWN_THRESHOLD) {
+	if (_gameState.CONST_STATE.gameTime > _fixedValues.CONST_GAME_TIMEINT && enemySpawnInt > _fixedValues.CONST_ENEMY_SPAWN_THRESHOLD) {
 
-		lastEnemyCreated = Date.now();
+		_gameState.CONST_STATE.lastEnemyCreated = Date.now();
 
-		toBeAnimated.enemy.push({ position: [Math.random() * (canvas.width - _fixedValues.CONST_ENEMY_WIDTH), 0],
-			sprite: new _entities.Entity('images/foe.png', [0, 0], [80, 80], false, 0, 180)
+		_gameState.CONST_STATE.toBeAnimated.enemy.push({ position: [Math.random() * (_gameState.CONST_STATE.canvas.width - _fixedValues.CONST_ENEMY_WIDTH), 0],
+			sprite: new _entities.Entity("images/foe.png", [0, 0], [80, 80], false, 0, 180)
 		});
 	}
 
 	//each enemy shoots the bullet
-	toBeAnimated.enemy.forEach(function (outerEl) {
+	_gameState.CONST_STATE.toBeAnimated.enemy.forEach(function (outerEl) {
 
 		var enemyBorder = outerEl.position[0] - outerEl.sprite.size[0];
 
 		if (enemyFireInt > _fixedValues.CONST_ENEMY_FIRE_THRESHOLD) {
 
-			lastEnemyFired = Date.now();
+			_gameState.CONST_STATE.lastEnemyFired = Date.now();
 
-			toBeAnimated.bullets.push({ position: [outerEl.position[0], outerEl.position[1] - _fixedValues.CONST_BULLETS_SPAWN],
-				sprite: new _entities.Entity('images/foe.png', [0, 0], [80, 50], false, 0, 260)
+			_gameState.CONST_STATE.toBeAnimated.bullets.push({ position: [outerEl.position[0], outerEl.position[1] - _fixedValues.CONST_BULLETS_SPAWN],
+				sprite: new _entities.Entity("images/foe.png", [0, 0], [80, 50], false, 0, 260)
 			});
 		}
 
-		if (outerEl.position[1] > canvas.height || enemyBorder > canvas.width) {
+		if (outerEl.position[1] > _gameState.CONST_STATE.canvas.height || enemyBorder > _gameState.CONST_STATE.canvas.width) {
 			outerEl.toErase = true;
 		}
 
 		//resolves collisions between enemies and rockets
-		toBeAnimated.rocket.forEach(function (innerEl) {
+		_gameState.CONST_STATE.toBeAnimated.rocket.forEach(function (innerEl) {
 
 			if (innerEl.position[1] + innerEl.sprite.size[1] < 0) {
 				innerEl.toErase = true;
@@ -384,60 +432,60 @@ var updateEntities = function updateEntities(delta) {
 			if (collide(outerEl.position, outerEl.sprite.size, innerEl.position, innerEl.sprite.size)) {
 				innerEl.toErase = true;
 				outerEl.toErase = true;
-				boom.play();
-				toBeAnimated.explosion.push({ position: [outerEl.position[0] + _fixedValues.CONST_EXPLOSION_SPAWN, outerEl.position[1]],
-					sprite: new _entities.Entity('images/player.png', [0, 0], [51, 60], true, 0, 240, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+				_gameState.CONST_STATE.boom.play();
+				_gameState.CONST_STATE.toBeAnimated.explosion.push({ position: [outerEl.position[0] + _fixedValues.CONST_EXPLOSION_SPAWN, outerEl.position[1]],
+					sprite: new _entities.Entity("images/player.png", [0, 0], [51, 60], true, 0, 240, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 				});
 			}
 		});
 
 		//resolves collisions between enemies and player
-		if (collide(outerEl.position, outerEl.sprite.size, player.position, player.handicap.size)) {
+		if (collide(outerEl.position, outerEl.sprite.size, _gameState.CONST_STATE.player.position, _gameState.CONST_STATE.player.handicap.size)) {
 
-			if (!player.wounded) {
+			if (!_gameState.CONST_STATE.player.wounded) {
 
-				player.handicap = { size: [80, 80] };
-				player.wounded = true;
-				player.sprite = new _entities.Entity('images/foe.png', [0, 0], [110, 165], false, 250, 0, 10, [0, 1, 2, 3, 4, 5]);
+				_gameState.CONST_STATE.player.handicap = { size: [80, 80] };
+				_gameState.CONST_STATE.player.wounded = true;
+				_gameState.CONST_STATE.player.sprite = new _entities.Entity("images/foe.png", [0, 0], [110, 165], false, 250, 0, 10, [0, 1, 2, 3, 4, 5]);
 			} else {
-				player.toErase = true;
+				_gameState.CONST_STATE.player.toErase = true;
 				gameOver();
-				boom.play();
-				toBeAnimated.explosion.push({ position: [player.position[0] + _fixedValues.CONST_EXPLOSION_SPAWN, player.position[1]],
-					sprite: new _entities.Entity('images/player.png', [0, 0], [51, 60], true, 0, 240, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+				_gameState.CONST_STATE.boom.play();
+				_gameState.CONST_STATE.toBeAnimated.explosion.push({ position: [_gameState.CONST_STATE.player.position[0] + _fixedValues.CONST_EXPLOSION_SPAWN, _gameState.CONST_STATE.player.position[1]],
+					sprite: new _entities.Entity("images/player.png", [0, 0], [51, 60], true, 0, 240, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 				});
 			}
 		}
 	});
 
 	//resolves colllisions between player and bullets
-	toBeAnimated.bullets.forEach(function (outerEl) {
+	_gameState.CONST_STATE.toBeAnimated.bullets.forEach(function (outerEl) {
 
-		if (outerEl.position[1] > canvas.height) {
+		if (outerEl.position[1] > _gameState.CONST_STATE.canvas.height) {
 			outerEl.toErase = true;
 		}
 
-		if (collide(outerEl.position, outerEl.sprite.size, player.position, player.handicap.size)) {
+		if (collide(outerEl.position, outerEl.sprite.size, _gameState.CONST_STATE.player.position, _gameState.CONST_STATE.player.handicap.size)) {
 
-			if (!player.wounded) {
+			if (!_gameState.CONST_STATE.player.wounded) {
 
-				player.handicap = { size: [80, 80] };
-				player.wounded = true;
-				player.sprite = new _entities.Entity('images/foe.png', [0, 0], [110, 165], false, 250, 0, 10, [0, 1, 2, 3, 4, 5]);
+				_gameState.CONST_STATE.player.handicap = { size: [80, 80] };
+				_gameState.CONST_STATE.player.wounded = true;
+				_gameState.CONST_STATE.player.sprite = new _entities.Entity("images/foe.png", [0, 0], [110, 165], false, 250, 0, 10, [0, 1, 2, 3, 4, 5]);
 			} else {
-				player.toErase = true;
+				_gameState.CONST_STATE.player.toErase = true;
 				gameOver();
-				toBeAnimated.explosion.push({ position: [player.position[0] + _fixedValues.CONST_EXPLOSION_SPAWN, player.position[1]],
-					sprite: new _entities.Entity('images/player.png', [0, 0], [51, 60], true, 0, 240, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+				_gameState.CONST_STATE.toBeAnimated.explosion.push({ position: [_gameState.CONST_STATE.player.position[0] + _fixedValues.CONST_EXPLOSION_SPAWN, _gameState.CONST_STATE.player.position[1]],
+					sprite: new _entities.Entity("images/player.png", [0, 0], [51, 60], true, 0, 240, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 				});
 			}
 		}
 	});
 
 	//rebuilds animation buffer, discarding elements with done animation and marked "toErase"
-	for (var i in toBeAnimated) {
+	for (var i in _gameState.CONST_STATE.toBeAnimated) {
 
-		toBeAnimated[i] = toBeAnimated[i].reduce(function (accumulator, element) {
+		_gameState.CONST_STATE.toBeAnimated[i] = _gameState.CONST_STATE.toBeAnimated[i].reduce(function (accumulator, element) {
 
 			if (!element.sprite.done && !element.toErase) {
 				accumulator.push(element);
@@ -448,30 +496,12 @@ var updateEntities = function updateEntities(delta) {
 };
 
 /**
- * describes actions on game being over
- * @function
- */
-var gameOver = function gameOver() {
-
-	ctx.font = _ctxText.CONST_CTX_TEXT.font;
-	ctx.textAlign = _ctxText.CONST_CTX_TEXT.textAlign;
-	ctx.fillStyle = _ctxText.CONST_CTX_TEXT.fillStyle;
-	ctx.fillText(_ctxText.CONST_CTX_TEXT.fillText, canvas.width / 2, canvas.height / 2);
-
-	setTimeout(function () {
-		layer.style.display = "block";
-	}, 1000);
-
-	isGameOver = true;
-};
-
-/**
  * updates game state
  * @function
  * @param {number} delta
  */
 var update = function update(delta) {
-	gameTime += delta;
+	_gameState.CONST_STATE.gameTime += delta;
 
 	handleInput(delta);
 
@@ -484,11 +514,11 @@ var update = function update(delta) {
  */
 var resetGame = function resetGame() {
 
-	gameTime = 0;
+	_gameState.CONST_STATE.gameTime = 0;
 
-	isGameOver = false;
+	_gameState.CONST_STATE.isGameOver = false;
 
-	toBeAnimated = {
+	_gameState.CONST_STATE.toBeAnimated = {
 		player: [],
 		rocket: [],
 		enemy: [],
@@ -496,14 +526,14 @@ var resetGame = function resetGame() {
 		explosion: []
 	};
 
-	toBeAnimated.player[0] = {
+	_gameState.CONST_STATE.toBeAnimated.player[0] = {
 		handicap: { size: [50, 50] },
 		wounded: false,
-		position: [canvas.width / 2, canvas.height - _fixedValues.CONST_PLAYER_SPAWN],
-		sprite: new _entities.Entity('images/player.png', [0, 0], [110, 165], false, 350, 0, 10, [0, 1, 2, 3, 4, 5])
+		position: [_gameState.CONST_STATE.canvas.width / 2, _gameState.CONST_STATE.canvas.height - _fixedValues.CONST_PLAYER_SPAWN],
+		sprite: new _entities.Entity("images/player.png", [0, 0], [110, 165], false, 350, 0, 10, [0, 1, 2, 3, 4, 5])
 	};
 
-	player = toBeAnimated.player[0];
+	_gameState.CONST_STATE.player = _gameState.CONST_STATE.toBeAnimated.player[0];
 };
 
 /**
@@ -513,17 +543,14 @@ var resetGame = function resetGame() {
 var main = function main() {
 
 	var now = Date.now();
-	var delta = (now - lastTime) / 1000;
+	var delta = (now - _gameState.CONST_STATE.lastTime) / 1000;
 
 	update(delta);
 	render();
 
-	lastTime = now;
+	_gameState.CONST_STATE.lastTime = now;
 	requestAnimationFrame(main);
 };
-
-//requiring all resources
-var mainEntities = [resources.load('images/player.png'), resources.load('images/terrain.png'), resources.load('images/foe.png'), resources.load('images/Lizard.jpg'), resources.load('images/logo.png')];
 
 /**
  * initiates the game
@@ -533,19 +560,19 @@ var comeOn = function comeOn() {
 
 	resetGame();
 
-	lastTime = Date.now();
+	_gameState.CONST_STATE.lastTime = Date.now();
 
 	main();
 
-	mainOST = new _sounds.Sound("sounds/Main.mp3");
-	mainOST.sound.loop = true;
-	mainOST.play();
+	_gameState.CONST_STATE.mainOST = new _sounds.Sound("sounds/Main.mp3");
+	_gameState.CONST_STATE.mainOST.sound.loop = true;
+	_gameState.CONST_STATE.mainOST.play();
 };
 
 var promise = new Promise(function (resolve, reject) {
-	mainEntities.forEach(function (element) {
+	_gameState.CONST_STATE.mainEntities.forEach(function (element) {
 		element.onload = function () {
-			return resolve('ok');
+			return resolve("ok");
 		};
 	});
 });
@@ -553,12 +580,14 @@ var promise = new Promise(function (resolve, reject) {
 // activates the game initiation function when all the resources have been loaded and cached
 promise.then(function (resolve) {
 	return comeOn();
-}).catch(function (reject) {
-	return console.log(reject);
 });
+//.catch(reject => console.log(reject));
+
+exports.setKey = setKey;
+exports.resetGame = resetGame;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -567,18 +596,61 @@ promise.then(function (resolve) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+//predefined active keys for the game
+var CONST_KEYS = {
+    key1: {
+        keyCode: 32,
+        keyName: "SPACE"
+    },
+    key2: {
+        keyCode: 37,
+        keyName: "LEFT"
+    },
+    key3: {
+        keyCode: 38,
+        keyName: "UP"
+    },
+    key4: {
+        keyCode: 39,
+        keyName: "RIGHT"
+    },
+    key5: {
+        keyCode: 40,
+        keyName: "DOWN"
+    }
+};
+
+var CONST_KEY_EVENTS = {
+    key1: "keydown",
+    key2: "keyup",
+    key3: "click"
+};
+
+exports.CONST_KEYS = CONST_KEYS;
+exports.CONST_KEY_EVENTS = CONST_KEY_EVENTS;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
 //parameters for styling text on canvas
 var CONST_CTX_TEXT = {
-    font: "30px Comic Sans MS",
-    textAlign: "center",
-    fillStyle: "red",
-    fillText: "GAME OVER"
+	font: "30px Comic Sans MS",
+	textAlign: "center",
+	fillStyle: "red",
+	fillText: "GAME OVER"
 };
 
 exports.CONST_CTX_TEXT = CONST_CTX_TEXT;
 
 /***/ }),
-/* 2 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -591,36 +663,11 @@ exports.Entity = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _script = __webpack_require__(0);
+var _script = __webpack_require__(1);
+
+var _gameState = __webpack_require__(0);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-// const resources = (function () {
-
-// 	let cache = {};
-
-//     /**
-//      * caches and loads image resources
-//      * @function
-//      * @param {string} source
-//      * @return {object}
-//      */
-// 	const load = (source) => {
-// 		if(cache[source]) {
-// 			return cache[source];
-// 		} else {
-// 			let entity = new Image();
-// 			entity.src = source;
-// 			cache[source] = entity;
-// 			return entity;
-// 		}
-// 	};
-
-// 	return {
-// 		load : load
-//     };
-// })();
-
 
 /**
  * constructs all entities in game
@@ -664,7 +711,7 @@ var Entity = function () {
 	_createClass(Entity, [{
 		key: "updateSelf",
 		value: function updateSelf(delta) {
-			_script.ctx.clearRect(0, 0, _script.canvas.width, _script.canvas.height);
+			_gameState.CONST_STATE.ctx.clearRect(0, 0, _gameState.CONST_STATE.canvas.width, _gameState.CONST_STATE.canvas.height);
 			this.index += this.animSpeed * delta;
 		}
 
@@ -677,7 +724,7 @@ var Entity = function () {
 	}, {
 		key: "renderSelf",
 		value: function renderSelf(ctx) {
-			var now = Date.now();
+
 			var frame = void 0;
 
 			var ind = Math.floor(this.index);
@@ -692,11 +739,11 @@ var Entity = function () {
 			}
 
 			var x = this.position[0];
-			var y = this.position[1];
+			//let y = this.position[1];
 
 			x = frame * this.size[0];
 
-			ctx.drawImage(this.sprite, x, this.axisShift, this.size[0], this.size[1], this.position[0], this.position[1], this.size[0], this.size[1]);
+			_gameState.CONST_STATE.ctx.drawImage(this.sprite, x, this.axisShift, this.size[0], this.size[1], this.position[0], this.position[1], this.size[0], this.size[1]);
 		}
 	}]);
 
@@ -706,7 +753,49 @@ var Entity = function () {
 exports.Entity = Entity;
 
 /***/ }),
-/* 3 */
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.initEvents = undefined;
+
+var _keys = __webpack_require__(2);
+
+var _gameState = __webpack_require__(0);
+
+var _script = __webpack_require__(1);
+
+/**
+ * adds all listeners necessary for the game
+ */
+var initEvents = function init() {
+	document.addEventListener(_keys.CONST_KEY_EVENTS.key1, function (event) {
+		(0, _script.setKey)(event, true);
+	});
+
+	document.addEventListener(_keys.CONST_KEY_EVENTS.key2, function (event) {
+		(0, _script.setKey)(event, false);
+
+		if (event.keyCode === _keys.CONST_KEYS.key1.keyCode) {
+			_gameState.CONST_STATE.pressedKey.cooldown = false;
+		}
+	});
+
+	_gameState.CONST_STATE.startButton.addEventListener(_keys.CONST_KEY_EVENTS.key3, function () {
+		_gameState.CONST_STATE.layer.style.display = "none";
+		(0, _script.resetGame)();
+	});
+};
+
+exports.initEvents = initEvents;
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -726,13 +815,13 @@ var CONST_ROCKET_INFRONT = exports.CONST_ROCKET_INFRONT = 5;
 //shows coefficient for background translateY appropriate value
 var CONST_FIELD_VELOCITY = exports.CONST_FIELD_VELOCITY = 350;
 
-//shows coefficient for rocket entity being moved  velocity 
+//shows coefficient for rocket entity being moved  velocity
 var CONST_ROCKET_VELOCITY = exports.CONST_ROCKET_VELOCITY = -10;
 
-//shows coefficient for bullets entity being moved  velocity 
+//shows coefficient for bullets entity being moved  velocity
 var CONST_BULLETS_VELOCITY = exports.CONST_BULLETS_VELOCITY = 7;
 
-//shows coefficient for enemy entity being moved  velocity 
+//shows coefficient for enemy entity being moved  velocity
 var CONST_ENEMY_VELOCITY = exports.CONST_ENEMY_VELOCITY = 3;
 
 //shows game interval for enemy spawn
@@ -757,50 +846,7 @@ var CONST_EXPLOSION_SPAWN = exports.CONST_EXPLOSION_SPAWN = 20;
 var CONST_PLAYER_SPAWN = exports.CONST_PLAYER_SPAWN = 150;
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-//predefined active keys for the game
-var CONST_KEYS = {
-    key1: {
-        keyCode: 32,
-        keyName: 'SPACE'
-    },
-    key2: {
-        keyCode: 37,
-        keyName: 'LEFT'
-    },
-    key3: {
-        keyCode: 38,
-        keyName: 'UP'
-    },
-    key4: {
-        keyCode: 39,
-        keyName: 'RIGHT'
-    },
-    key5: {
-        keyCode: 40,
-        keyName: 'DOWN'
-    }
-};
-
-var CONST_KEY_EVENTS = {
-    key1: 'keydown',
-    key2: 'keyup',
-    key3: 'click'
-};
-
-exports.CONST_KEYS = CONST_KEYS;
-exports.CONST_KEY_EVENTS = CONST_KEY_EVENTS;
-
-/***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -826,17 +872,34 @@ var Sound = function () {
 
 		this.sound = document.createElement("audio");
 		this.sound.src = src;
-		this.sound.setAttribute("preload", "auto");
-		this.sound.setAttribute("controls", "none");
-		this.sound.style.display = "none";
-		document.body.appendChild(this.sound);
+		this.init();
 	}
+	/**
+  * initiates audio attributes
+  */
+
 
 	_createClass(Sound, [{
+		key: "init",
+		value: function init() {
+			this.sound.setAttribute("preload", "auto");
+			this.sound.setAttribute("controls", "none");
+			this.sound.style.display = "none";
+			document.body.appendChild(this.sound);
+		}
+		/**
+   * initiates playback
+   */
+
+	}, {
 		key: "play",
 		value: function play() {
 			this.sound.play();
 		}
+		/**
+   * pauses playback
+   */
+
 	}, {
 		key: "stop",
 		value: function stop() {

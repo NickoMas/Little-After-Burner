@@ -1,4 +1,5 @@
-import { ctx, canvas, resources } from "./script.js";
+import { resources } from "./script.js";
+import { CONST_STATE } from "./gameState.js";
 
 /**
  * constructs all entities in game
@@ -13,7 +14,7 @@ import { ctx, canvas, resources } from "./script.js";
  * @param {array} frames - number of frames within animation
  */
 class Entity {
-	constructor(url, pos, size, once, speed = 0, axis = 0,animSpeed = 0,frames = [0]) {
+	constructor(url, pos, size, once, speed = 0, axis = 0, animSpeed = 0, frames = [0]) {
 		this.sprite = resources.load(url);
 		this.position = pos;
 		this.size = size;
@@ -30,8 +31,8 @@ class Entity {
 	 * @function
 	 * @param {number} delta
 	 */
-	updateSelf (delta) {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	updateSelf(delta) {
+		CONST_STATE.ctx.clearRect(0, 0, CONST_STATE.canvas.width, CONST_STATE.canvas.height);
 		this.index += this.animSpeed * delta;
 	}
 
@@ -40,27 +41,27 @@ class Entity {
 	 * @function
 	 * @param {CanvasRenderingContext2D} ctx
 	 */
-	renderSelf (ctx) {
-		let now = Date.now();
+	renderSelf(ctx) {
+
 		let frame;
 
-		let ind = Math.floor(this.index);
+		const ind = Math.floor(this.index);
 
-		let length = this.frames.length;
+		const length = this.frames.length;
 
 		frame = this.frames[ind % length];
 
-		if(this.once && ind >= length) {
+		if (this.once && ind >= length) {
 			this.done = true;
 			return;
 		}
 
 		let x = this.position[0];
-		let y = this.position[1];
+		//let y = this.position[1];
 
 		x = frame * this.size[0];
 
-		ctx.drawImage(this.sprite,
+		CONST_STATE.ctx.drawImage(this.sprite,
 						x,
 						this.axisShift,
 						this.size[0],

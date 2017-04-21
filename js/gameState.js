@@ -1,42 +1,59 @@
-let CONST_STATE = {
-	canvas: document.querySelector('#action');,
-	bgcanvas: document.querySelector('#field');,
-	ctx: null,
-	bgctx: null,
-	startButton: null,
-	layer: null,
-	lastTime: null,
-	lastFire: 0,
-	lastEnemyCreated: 0,
-	lastEnemyFired: 0,
-	gameTime: null,
-	isGameOver: null,
-	mainOST: null,
-	boom: null,
-	fire: null,
-	pressedKey: {cooldown: false},
-	toBeAnimated: null
-};
+/**
+ * stores game state data
+ * @return {object}
+ */
+const CONST_STATE = (function () {
+	const canvas = document.querySelector("#action");
+	const bgcanvas = document.querySelector("#field");
+	const ctx = canvas.getContext("2d");
+	const bgctx = bgcanvas.getContext("2d");
+
+	const startButton = document.getElementById("start");
+	const layer = document.getElementById("layer");
+
+	const lastTime = null;
+	const lastFire = 0;
+	const lastEnemyCreated = 0;
+	const lastEnemyFired = 0;
+	const player = null;
+	const field = null;
+
+	const gameTime = null;
+	const isGameOver = null;
+
+	const mainOST = null;
+	const boom = null;
+	const fire = null;
+
+	const pressedKey = { cooldown: false };
+
+	const toBeAnimated = null;
+
+	const mainEntities = null;
+
+	return {
+		canvas,
+		bgcanvas,
+		ctx,
+		bgctx,
+		startButton,
+		layer,
+		lastTime,
+		lastFire,
+		lastEnemyCreated,
+		lastEnemyFired,
+		player,
+		field,
+		gameTime,
+		isGameOver,
+		mainOST,
+		boom,
+		fire,
+		pressedKey,
+		toBeAnimated,
+		mainEntities
+	};
+
+}());
 
 export { CONST_STATE };
-
-class gameState {
-	constructor(){
-
-	}
-
-	initListeners(){
-		document.addEventListener(CONST_KEY_EVENTS.key1, (event) => {
-			setKey(event, true);
-		});
-
-		document.addEventListener(CONST_KEY_EVENTS.key2, (event) => {
-			setKey(event, false);
-
-			if (event.keyCode === CONST_KEYS.key1.keyCode) {
-				pressedKey.cooldown = false;
-			}
-		});
-	}
-
-}

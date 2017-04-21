@@ -9,13 +9,13 @@ export const CONST_ROCKET_INFRONT = 5;
 //shows coefficient for background translateY appropriate value
 export const CONST_FIELD_VELOCITY = 350;
 
-//shows coefficient for rocket entity being moved  velocity 
+//shows coefficient for rocket entity being moved  velocity
 export const CONST_ROCKET_VELOCITY = -10;
 
-//shows coefficient for bullets entity being moved  velocity 
+//shows coefficient for bullets entity being moved  velocity
 export const CONST_BULLETS_VELOCITY = 7;
 
-//shows coefficient for enemy entity being moved  velocity 
+//shows coefficient for enemy entity being moved  velocity
 export const CONST_ENEMY_VELOCITY = 3;
 
 //shows game interval for enemy spawn
